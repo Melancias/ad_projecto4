@@ -1,0 +1,1 @@
+INSERT INTO listas_albuns (id_user, id_album, id_rate) VALUES (1, 3, 4);

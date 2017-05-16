@@ -1,0 +1,1 @@
+INSERT INTO utilizadores (id, nome, username, password) VALUES (1, 'Bananas Machado', 'bananas', 'bolachas');
