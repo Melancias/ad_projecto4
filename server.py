@@ -4,20 +4,21 @@ Aplicações distribuídas - Projeto 3 - server.py
 Grupo: 20
 Alunos: 43551 45802 43304
 """
-import json
+import json,pickle
 
 from flask import redirect
 from flask import url_for
 from requests_oauthlib import OAuth2Session
 
-import database, queries
+import database, queries,hashlib
 
 from flask import Flask, request,jsonify
 session={}
 app = Flask(__name__)
 # Informação da aplicação registada no GitHub
-client_id = '4a4797fe30985a8946ca'
-client_secret = 'd5663c7aaeca9b1ebad183cb54045127b57186c3'
+credentials=json.load(open("credentials.json","r"))
+server_id = credentials['server_id']
+server_secret = credentials['server_secret']
 # Informação sobre a Authorization server
 authorization_base_url = 'https://github.com/login/oauth/authorize'
 token_url = 'https://github.com/login/oauth/access_token'
@@ -56,6 +57,7 @@ def page_not_found(e):
 @app.route('/utilizadores', methods = ["GET","PUT","PATCH","DELETE"])
 @app.route('/utilizadores/<int:id>', methods = ["GET", "DELETE"])
 def utilizador(id = None):
+
     """
     Hanbles all requests for the base url '/utilizadores'
     :param id: the integer given in the url, None otherwise
@@ -223,6 +225,7 @@ def bandas(id = None):
 @app.route('/albuns/rate', methods = ["PUT"])
 @app.route('/albuns/rate/<int:id>', methods = ["GET","DELETE"])
 def albuns(id = None):
+    print checkLogin(request.cookies['token'])
     """
     Hanbles all requests for the base url '/albuns'
     :param id: the integer given in the url, None otherwise
@@ -393,7 +396,7 @@ def albuns(id = None):
 
 @app.route("/login")
 def login():
- github = OAuth2Session(client_id)
+ github = OAuth2Session(server_id)
  authorization_url, state = github.authorization_url(authorization_base_url)
  # State is used to prevent CSRF, keep this for later.
  session['oauth_state'] = state
@@ -401,21 +404,33 @@ def login():
 
 @app.route("/callback", methods=["GET"])
 def callback():
-     github = OAuth2Session(client_id, state=session['oauth_state'])
+     github = OAuth2Session(server_id, state=session['oauth_state'])
      token = github.fetch_token(token_url,
-     client_secret=client_secret,
-     authorization_response=request.url)
+                                client_secret=server_secret,
+                                authorization_response=request.url)
+
      session['oauth_token'] = token
-     return redirect(url_for('.profile'))
+     return profile(token.get("access_token"))
 
-@app.route("/profile", methods=["GET"])
-def profile():
-    github = OAuth2Session(client_id, token=session['oauth_token'])
-    return jsonify(github.get('https://api.github.com/user').json())
+@app.route("/token", methods=["GET"])
+def profile(token):
+    github = OAuth2Session(server_id, token=session['oauth_token'])
+    tokenfinal=token+hashlib.sha256(token).hexdigest()
+    tokenresponse='<p>Copy the following code to the client application:</p><textarea style="width:36%;font-size:100%">'+tokenfinal+'</textarea>'
+    return tokenresponse
 
+def checkLogin(tokenClient):
+    try:
+        for token in session['oauth_token']:
+            if token.get("access_token")==tokenClient:
+                return True
+        return False
+    except:
+        return False
 
 
 if __name__ == '__main__':
     context = ('certs/server1.crt', 'certs/server.key')
     conndb, db = database.connect_db('work.db')
     app.run(debug = True,threaded=True,ssl_context=context)
+

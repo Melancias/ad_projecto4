@@ -4,13 +4,17 @@ Aplicações distribuídas - Projeto 3 - client.py
 Grupo: 20
 Alunos: 43551 45802 43304
 """
-import json, requests, pprint, sys, signal,requests_oauthlib
+import json, requests, pprint, sys, signal,requests_oauthlib,subprocess,webbrowser,sys,hashlib
+
+
 
 actions = ["ADD", "SHOW", "REMOVE", "UPDATE"]
 genero = ["pop", "rock", "indy", "trance", "metal"]
 rates = {"M": 1, "MM": 2, "S": 3, "B": 4, "MB": 5}
+session_token=None
 
 ## TODO: Se houver tempo, fazer o command HELP
+## TODO: Cliente liga-> ch
 
 def handler(signum, frame):
     print ""
@@ -21,12 +25,39 @@ def handler(signum, frame):
 signal.signal(signal.SIGTSTP, handler)
 signal.signal(signal.SIGINT, handler)
 
+
+def login():
+    global session_token
+    url = 'https://localhost:5000/login'
+    if sys.platform == 'darwin':  # in case of OS X
+        subprocess.Popen(['open', url])
+    else:
+        webbrowser.open_new_tab(url)
+    tokenchecksum=raw_input("Enter here the token code given to you on the website:\n")
+    token=tokenchecksum[:40]
+    checksum=tokenchecksum[40:]
+    if hashlib.sha256(token).hexdigest()!=checksum:
+        print "Token is incorrect, restart the client and try again"
+        sys.exit(-1)
+    else:
+        session_token=token
+
+
+
 while True:
     # try:
+        if session_token==None:
+            print "Login is required:"
+            login()
+            continue
+
         msg = raw_input("Comand: ").split(" ")
         data = {}
         url = 'https://localhost:5000'
         s = requests.session()
+        s.cert = ('certs/cliente.crt', 'certs/cliente.key')
+        s.verify = 'certs/root.pem'
+        s.cookies.set("token",session_token)
         if msg[0] in actions:
 
             if msg[0] == "ADD":
@@ -46,7 +77,7 @@ while True:
                         url += '/bandas'
                     else:
                         print "Gender given is not valid\nValid genders: pop | rock | indy | metal | trance"
-                    continue
+                        continue
                 elif msg[1] == "ALBUM" and len(msg) == 5:
                     flag = False
                     try:
@@ -86,7 +117,7 @@ while True:
 
                 # Correu tudo bem entao faz o pedido!
                 print 'url', url
-                request = requests.put(url=url, json=data)
+                request = s.put(url=url, json=data)
                 response = json.loads(request.text.encode('utf8'))
                 pprint.pprint(response)
 
@@ -155,12 +186,12 @@ while True:
                 # Correu tudo bem entao faz o pedido!
                 if msg[0] == "SHOW":
                     print 'url', url
-                    request = requests.get(url=url,cert=('certs/cliente.crt', 'certs/cliente.key'),verify='certs/root.pem')
+                    request = s.get(url=url)
                     response = json.loads(request.text.encode('utf8'))
                     pprint.pprint(response)
                 else:
                     print 'url', url
-                    request = requests.delete(url=url)
+                    request = s.delete(url=url)
                     response = json.loads(request.text.encode('utf8'))
                     pprint.pprint(response)
 
@@ -199,7 +230,7 @@ while True:
 
                 # Correu tudo bem entao faz o pedido!
                 print 'url', url
-                request = requests.patch(url=url, json=data)
+                request = s.patch(url=url, json=data)
                 response = json.loads(request.text.encode('utf8'))
                 pprint.pprint(response)
         else:
@@ -213,3 +244,5 @@ while True:
     #     print e.args
     #     print "ERROR"
     #     sys.exit()
+
+
