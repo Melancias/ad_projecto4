@@ -11,17 +11,19 @@ from flask import url_for
 from requests_oauthlib import OAuth2Session
 
 import database, queries,hashlib
-
-from flask import Flask, request,jsonify
-session={}
+tokenDB=[]
+from flask import Flask, request,jsonify,session
 app = Flask(__name__)
+app.secret_key = 'bolacha'
 # Informação da aplicação registada no GitHub
 credentials=json.load(open("credentials.json","r"))
 server_id = credentials['server_id']
 server_secret = credentials['server_secret']
 # Informação sobre a Authorization server
-authorization_base_url = 'https://github.com/login/oauth/authorize'
-token_url = 'https://github.com/login/oauth/access_token'
+github_authorization_base_url = 'https://github.com/login/oauth/authorize'
+github_token_url = 'https://github.com/login/oauth/access_token'
+twitter_authorization_base_url = 'https://api.twitter.com/oauth/authorize'
+twitter_token_url='	https://api.twitter.com/oauth/access_token'
 
 class MyException(Exception):
     """
@@ -63,6 +65,9 @@ def utilizador(id = None):
     :param id: the integer given in the url, None otherwise
     :return: a json object composed by the function composeResponse
     """
+    if not (checkToken(request.cookies.get('token'))):
+        return jsonify({"errors":[{"code":215,"message":"Bad Authentication data."}]})
+
     res=None
     if request.method == "GET":
         # GET TODOS os users
@@ -154,6 +159,9 @@ def bandas(id = None):
     :param id: the integer given in the url, None otherwise
     :return: a json object composed by the function composeResponse
     """
+    if not (checkToken(request.cookies.get('token'))):
+        return jsonify({"errors":[{"code":215,"message":"Bad Authentication data."}]})
+
     res = None
     if request.method == "GET":
         # GET Todas as bandas
@@ -225,12 +233,15 @@ def bandas(id = None):
 @app.route('/albuns/rate', methods = ["PUT"])
 @app.route('/albuns/rate/<int:id>', methods = ["GET","DELETE"])
 def albuns(id = None):
-    print checkLogin(request.cookies['token'])
     """
     Hanbles all requests for the base url '/albuns'
     :param id: the integer given in the url, None otherwise
     :return: a json object composed by the function composeResponse
     """
+
+    if not (checkToken(request.cookies.get('token'))):
+        return jsonify({"errors":[{"code":215,"message":"Bad Authentication data."}]})
+
     res=None
     action=None
     actionlist=request.url_rule.rule.split("/")
@@ -397,7 +408,7 @@ def albuns(id = None):
 @app.route("/login")
 def login():
  github = OAuth2Session(server_id)
- authorization_url, state = github.authorization_url(authorization_base_url)
+ authorization_url, state = github.authorization_url(github_authorization_base_url)
  # State is used to prevent CSRF, keep this for later.
  session['oauth_state'] = state
  return redirect(authorization_url)
@@ -405,7 +416,7 @@ def login():
 @app.route("/callback", methods=["GET"])
 def callback():
      github = OAuth2Session(server_id, state=session['oauth_state'])
-     token = github.fetch_token(token_url,
+     token = github.fetch_token(github_token_url,
                                 client_secret=server_secret,
                                 authorization_response=request.url)
 
@@ -417,20 +428,16 @@ def profile(token):
     github = OAuth2Session(server_id, token=session['oauth_token'])
     tokenfinal=token+hashlib.sha256(token).hexdigest()
     tokenresponse='<p>Copy the following code to the client application:</p><textarea style="width:36%;font-size:100%">'+tokenfinal+'</textarea>'
+    tokenDB.append(token)
     return tokenresponse
 
-def checkLogin(tokenClient):
-    try:
-        for token in session['oauth_token']:
-            if token.get("access_token")==tokenClient:
-                return True
-        return False
-    except:
-        return False
-
+def checkToken(token):
+    if token in tokenDB:
+        return True
+    return False
 
 if __name__ == '__main__':
     context = ('certs/server1.crt', 'certs/server.key')
     conndb, db = database.connect_db('work.db')
-    app.run(debug = True,threaded=True,ssl_context=context)
+    app.run(debug = True, threaded=True, ssl_context=context)
 
