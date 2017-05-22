@@ -11,6 +11,10 @@ import json, requests, pprint, sys, signal,requests_oauthlib,subprocess,webbrows
 actions = ["ADD", "SHOW", "REMOVE", "UPDATE"]
 genero = ["pop", "rock", "indy", "trance", "metal"]
 rates = {"M": 1, "MM": 2, "S": 3, "B": 4, "MB": 5}
+
+s = requests.session()
+s.cert = ('certs/cliente.crt', 'certs/cliente.key')
+s.verify = 'certs/root.pem'
 session_token=None
 
 ## TODO: Se houver tempo, fazer o command HELP
@@ -33,6 +37,7 @@ def login():
         subprocess.Popen(['open', url])
     else:
         webbrowser.open_new_tab(url)
+
     tokenchecksum=raw_input("Enter here the token code given to you on the website:\n")
     token=tokenchecksum[:40]
     checksum=tokenchecksum[40:]
@@ -43,21 +48,17 @@ def login():
         session_token=token
 
 
-
 while True:
-    # try:
+    try:
         if session_token==None:
             print "Login is required:"
             login()
+            s.cookies.set("token",session_token)
             continue
 
         msg = raw_input("Comand: ").split(" ")
         data = {}
         url = 'https://localhost:5000'
-        s = requests.session()
-        s.cert = ('certs/cliente.crt', 'certs/cliente.key')
-        s.verify = 'certs/root.pem'
-        s.cookies.set("token",session_token)
         if msg[0] in actions:
 
             if msg[0] == "ADD":
@@ -237,12 +238,12 @@ while True:
             print msg[0] + " is not a valid command"
             continue
 
-    # except KeyboardInterrupt:
-    #     exit()
-    # except Exception as e:
-    #     print e.message
-    #     print e.args
-    #     print "ERROR"
-    #     sys.exit()
+    except KeyboardInterrupt:
+        exit()
+    except Exception as e:
+        print e.message
+        print e.args
+        print "ERROR"
+        sys.exit()
 
 

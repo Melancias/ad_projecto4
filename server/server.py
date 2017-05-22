@@ -4,21 +4,29 @@ Aplicações distribuídas - Projeto 3 - server.py
 Grupo: 20
 Alunos: 43551 45802 43304
 """
-import json,pickle
-
+import hashlib
+import json
+import pickle
 from flask import redirect
 from flask import url_for
 from requests_oauthlib import OAuth2Session
 
-import database, queries,hashlib
+# Personalised libraries
+from libs import queries, database
+
 tokenDB=[]
 from flask import Flask, request,jsonify,session
 app = Flask(__name__)
 app.secret_key = 'bolacha'
 # Informação da aplicação registada no GitHub
-credentials=json.load(open("credentials.json","r"))
-server_id = credentials['server_id']
-server_secret = credentials['server_secret']
+
+server_id = "4a4797fe30985a8946ca"
+server_secret = "6f0ccad4ab32b01ebf2f1e6c359e286ce7301094"
+
+# print "This server aplication uses Github's authentication. Please add this application to your Github."
+# server_id = raw_input("server_id: ")
+# server_secret = raw_input("server_secret: ")
+
 # Informação sobre a Authorization server
 github_authorization_base_url = 'https://github.com/login/oauth/authorize'
 github_token_url = 'https://github.com/login/oauth/access_token'
@@ -79,7 +87,7 @@ def utilizador(id = None):
         #GET 1 user
         else:
             try:
-                queryAns = db.execute(queries.show['USER'],[int(id)])
+                queryAns = db.execute(queries.show['USER'], [int(id)])
                 rquery = queryAns.fetchone()
                 if rquery is None:
                     res=composeResponse("User not found", 204, "No User with the given id was not found in our database", request.url_rule.rule)
@@ -96,7 +104,7 @@ def utilizador(id = None):
     # Em caso de sucesso responder com a localização do novo recurso
         try:
             data=request.json
-            db.execute(queries.add['USER'],[data['nome'],data['username'],data['password']])
+            db.execute(queries.add['USER'], [data['nome'], data['username'], data['password']])
             conndb.commit()
             res=composeResponse("Insert successful ", 201, "User "+data['username']+" was created", request.url_rule.rule)
         except:
@@ -133,7 +141,7 @@ def utilizador(id = None):
             db.execute(queries.show['USER'], [int(data['id_user'])])
             if db.fetchone() is None:
                 raise MyException("User não existe")
-            db.execute(queries.update['USER'],[data['password'],int(data['id_user'])])
+            db.execute(queries.update['USER'], [data['password'], int(data['id_user'])])
             conndb.commit()
             res=composeResponse("User updated", 202, "The user with id "+str(id)+" was updated", request.url_rule.rule)
         except ValueError as ve:
@@ -258,7 +266,7 @@ def albuns(id = None):
         else:
             print action
             if action is None:
-                c = db.execute(queries.show['ALBUM'],[int(id)])
+                c = db.execute(queries.show['ALBUM'], [int(id)])
                 rquery = c.fetchone()
                 if rquery is None:
                     res=composeResponse("Album not found", 204, "No Album with the given id was not found in our database", request.url_rule.rule)
@@ -289,7 +297,7 @@ def albuns(id = None):
                 id_banda = int(data['id_banda'])
                 flag = True
                 ano = int(data['ano'])
-                db.execute(queries.add['ALBUM'],[id_banda, data['nome'], ano])
+                db.execute(queries.add['ALBUM'], [id_banda, data['nome'], ano])
                 conndb.commit()
                 res=composeResponse("Insert successful ", 201, "Album "+data['nome']+" was created", request.url_rule.rule)
             except ValueError as ve:
@@ -415,13 +423,21 @@ def login():
 
 @app.route("/callback", methods=["GET"])
 def callback():
-     github = OAuth2Session(server_id, state=session['oauth_state'])
-     token = github.fetch_token(github_token_url,
-                                client_secret=server_secret,
-                                authorization_response=request.url)
+    """
+    Called by github
+    :return:
+    """
+    param = request.url.split("?")
+    if len(param) == 2:
+        github = OAuth2Session(server_id, state=session['oauth_state'])
+        token = github.fetch_token(github_token_url,
+                                    client_secret=server_secret,
+                                    authorization_response=request.url)
 
-     session['oauth_token'] = token
-     return profile(token.get("access_token"))
+        session['oauth_token'] = token
+        return profile(token.get("access_token"))
+    else:
+        return composeResponse("404 Not found", 404, "Sorry m8, that url leads nowhere :/", str(request)[10:-8])
 
 @app.route("/token", methods=["GET"])
 def profile(token):
@@ -438,6 +454,6 @@ def checkToken(token):
 
 if __name__ == '__main__':
     context = ('certs/server1.crt', 'certs/server.key')
-    conndb, db = database.connect_db('work.db')
+    conndb, db = database.connect_db('db/work.db')
     app.run(debug = True, threaded=True, ssl_context=context)
 

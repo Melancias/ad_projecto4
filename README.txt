@@ -1,5 +1,3 @@
-# ad_projecto4
-
 """
 Aplicações distribuídas - Projeto 3 - README.txt
 Grupo: 20
