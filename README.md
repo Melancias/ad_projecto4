@@ -14,13 +14,14 @@ Ficheiros:
     certs/server.key
     certs/server1.crt
     certs/server1.csr
-    db/setup.sql
+    db/__init__.py
     db/inserts.sql
+    db/setup.sql
     db/work.db
     libs/database.py
     libs/queries.py
-    server.py
     client.py
+    server.py
 """
 
 INDEX:
@@ -32,8 +33,9 @@ INDEX:
     1. server.py
     2. client.py
   2. Personalised libraries:
-    1. database.py
-    2. queries.py
+    1. __init__.py
+    2. database.py
+    3. queries.py
   3. Other:
     1. setup.sql
     2. inserts.sql
@@ -178,6 +180,12 @@ INDEX:
         This does not affect the normal execution of the application
 
 2. Personalised libraries
+    
+    All contained in the folder libs/
+
+    __init__.py
+        
+        Makes python recognize the folder libs/ as a usable library
 
     database.py
 
@@ -185,7 +193,7 @@ INDEX:
 
         dict_factory - a static function that turns the result of a query to the sqlite database into a dictionary
 
-        connect:db   - checks if the database exists. If it does, it connects, if it doesn't, it creats it and connects
+        connect:db   - checks if the database exists. If it does, it connects, if it doesn't, it creates it and connects
 
     queries.py
 
