@@ -4,16 +4,26 @@ Grupo: 20
 Alunos: 43551 45802 43304
 
 Ficheiros:
-    database.py
+    certs/cliente.crt
+    certs/cliente.csr
+    certs/cliente.key
+    certs/root.key
+    certs/root.pem
+    certs/server.key
+    certs/server1.crt
+    certs/server1.csr
+    db/setup.sql
+    db/inserts.sql
+    db/work.db
+    libs/database.py
+    libs/queries.py
     server.py
-    queries.py
     client.py
-    setup.sql
-    inserts.sql
-    work.db
 """
 
 INDEX:
+
+0. Notes
 
 1. Files:
   1. Main:
@@ -27,14 +37,29 @@ INDEX:
     2. inserts.sql
     3. work.db
     4. certeficados
+
 2. iptables:
   1. Regras
   2. Testes
+
 3. Execution examples:
   1. ADD
   2. SHOW
   3. REMOVE
   4. UPDATE
+
+#-----------------------
+0 - NOTES
+#-----------------------
+
+    O mecanismo de OAuth funciona implementado da seguinta maneira:
+    Quando se abre o cliente, este redirectiona para o link de autorização fornecido pelo o servidor, no path '/login'.
+    Este path redirectiona o cliente para o link de autorização do github. Este é aberto numa nova tab, no browser do cliente, e, após o login, devolve ao servidor a informação necessária, no path '/callback'.
+    O callback gera uma view, que será apresentada na mesma tab préviamente gerada, com a token e uma sintese do token, para garantir a sua integridade.
+    O cliente é instruido a introduzir o token apresentado, na aplicação cliente.
+    Quando o cliente a introduz, este verifica a sua integridade, e incorpora a token numa cookie de sessão para garantir a autentiçidade em cada pedido.
+    Qualquer pedido feito ao servidor que não tenha uma token, não pode aceder ao conteudo, recebendo uma mensagem de "Bad Authentication data." com o código 215.
+
 
 #-----------------------
 1 - FILES
