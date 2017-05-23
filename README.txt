@@ -10,22 +10,33 @@ Ficheiros:
     client.py
     setup.sql
     inserts.sql
-    README.txt
+    work.db
 """
 
 INDEX:
 
-1. Main programs:
+1. Files:
+  1. Main:
     1. server.py
     2. client.py
-2. Personalised libraries:
+  2. Personalised libraries:
     1. database.py
     2. queries.py
-3. Other:
+  3. Other:
     1. setup.sql
     2. inserts.sql
+    3. work.db
+2. Execution examples:
+  1. ADD
+  2. SHOW
+  3. REMOVE
+  4. UPDATE
 
-Main programs
+#-----------------------
+1 - FILES
+#-----------------------
+
+1. Main
 
     server.py:
 
@@ -72,7 +83,7 @@ Main programs
             ## ------- ADD ----------
 
             ADD USER <nome> <username> <password>
-            ADD BANDA <nome> <ano> <genero>
+            ADD BANDA <nome> <ano> <genero> *problema com a identação (ver exemplos de comando)
             ADD ALBUM <id_banda> <nome> <ano album>
             ADD <id_user> <id_album> <rate>
 
@@ -108,7 +119,7 @@ Main programs
         The program cam be safely shut down, by pressing either ctrl+C or ctrl+Z
         In the eventuality of an unexpected error occurring, if will print 'ERROR' and exit the program
 
-Personalised libraries
+2. Personalised libraries
 
     database.py
 
@@ -127,7 +138,7 @@ Personalised libraries
         'remove' - contains every DELETE query
         'update' - contains every UPDATE query
 
-Other:
+3. Other:
 
     setup.sql
 
@@ -136,3 +147,361 @@ Other:
     inserts.sql
 
         An sql file with some INSERT queries to populate the database
+
+    work.db
+
+        The db for the server
+
+#-----------------------
+2 - EXECUTION EXAMPLES
+#-----------------------
+
+-----------------------
+1. ADD
+  de um USER:
+    comando: ADD USER grupo20 G20 pass20
+
+    resposta: {u'detail': u'User G20 was created',
+               u'status': 201,
+               u'title': u'Insert successful ',
+               u'url': u'/utilizadores'}
+
+  de uma BANDA:
+    comando: ADD BANDA banda20 ano rock
+
+    resposta: The year provided was not an Integer
+
+    comando: ADD BANDA banda20 2017 classico
+
+    resposta:Gender given is not valid
+             Valid genders: pop | rock | indy | metal | trance
+
+    comando: ADD BANDA banda20 2017 trance
+
+    resposta: {u'detail': u'Band banda20 was created',
+               u'status': 201,
+               u'title': u'Insert successful ',
+               u'url': u'/bandas'}
+
+  de um ALBUM:
+    comando: ADD ALBUM a album20 2017
+
+    resposta: The ID provided was not an Integer
+
+    comando: ADD ALBUM 1 album20 ano
+
+    resposta: The year provided is not an Integer
+
+    comando: ADD ALBUM 1 album20 2017
+
+    resposta: {u'detail': u'Album album20 was created',
+               u'status': 201,
+               u'title': u'Insert successful ',
+               u'url': u'/albuns'}
+
+  de uma RATE:
+    comando: ADD a 1 MB
+
+    resposta: The ID provided was not an Integer
+
+    comando: ADD 1 a MB
+
+    resposta: The year provided was not an Integer (should say id, but ups. Either way, verification is being done)
+
+    comando: ADD 1 1 a
+
+    resposta: Rate given is invalid
+              Valid Ratings: M | MM | S | B | MB
+
+    comando: ADD 1 1 MB
+
+    resposta: {u'detail': u'User 1 rated the album 1',
+               u'status': 201,
+               u'title': u'Rated',
+               u'url': u'/albuns/rate'}
+
+-----------------------
+2. SHOW
+  comando: SHOW USER a
+
+  resposta: User id provided was not an Integer
+
+  comando: SHOW USER 7
+
+  resposta: {u'detail': u'No User with the given id was not found in our database',
+             u'status': 204,
+             u'title': u'User not found',
+             u'url': u'/utilizadores/<int:id>'}
+
+  comando: SHOW USER 1
+
+  resposta: {u'detail': u'{"username": "G20", "id": 1, "nome": "grupo20"}',
+             u'status': 200,
+             u'title': u'User id 1',
+             u'url': u'/utilizadores/<int:id>'}
+
+  comando: SHOW BANDA a
+
+  resposta: Band id provided was not an Integer
+
+  comando: SHOW BANDA 7
+
+  resposta: {u'detail': u'No Band with the given id was not found in our database',
+             u'status': 204,
+             u'title': u'Band not found',
+             u'url': u'/bandas/<int:id>'}
+
+  comando: SHOW BANDA 1
+
+  resposta: {u'detail': u'{"ano": 2017, "genero": "trance", "id": 1, "nome": "banda20"}',
+             u'status': 200,
+             u'title': u'Band id 1',
+             u'url': u'/bandas/<int:id>'}
+
+  comando: SHOW ALBUM a
+
+  response: Album id provided was not an Integer
+
+  comando: SHOW ALBUM 7
+
+  response: {u'detail': u'No Album with the given id was not found in our database',
+             u'status': 204,
+             u'title': u'Album not found',
+             u'url': u'/albuns/<int:id>'}
+
+  comando: SHOW ALBUM 1
+
+  response: {u'detail': u'{"id_banda": 1, "id": 1, "ano_album": 2017, "nome": "album20"}',
+             u'status': 200,
+             u'title': u'Album id 1',
+             u'url': u'/albuns/<int:id>'}
+
+  comando: SHOW ALL USERS
+
+  resposta: {u'detail': u'[{"username": "G20", "nome": "grupo20"},
+                           {"username": "CENAS", "nome": "CENAS"},
+                           {"username": "CENAS", "nome": "CENAS"},
+                           {"username": "CENAS", "nome": "CENAS"}]',
+             u'status': 200,
+             u'title': u'All Users',
+             u'url': u'/utilizadores'}
+
+  comando: SHOW ALL BANDAS
+
+  resposta: {u'detail': u'[{"ano": 2017, "genero": "trance", "id": 1, "nome": "banda20"},
+                           {"ano": 2017, "genero": "trance", "id": 2, "nome": "banda20"}]',
+             u'status': 200,
+             u'title': u'Every band',
+             u'url': u'/bandas'}
+
+  comando: SHOW ALL ALBUNS
+
+  resposta: {u'detail': u'[{"id_banda": 1, "id": 1, "ano_album": 2017, "nome": "album20"},
+                           {"id_banda": 2, "id": 2, "ano_album": 2010, "nome": "wupwup"}]',
+             u'status': 200,
+             u'title': u'All albums',
+             u'url': u'/albuns'}
+
+  comando: SHOW ALL ALBUNS_B a
+
+  resposta: Band id provided was not an Integer
+
+  comando: SHOW ALL ALBUNS_B 1
+
+  resposta: {u'detail': u'[{"id_banda": 1, "ano_album": 2017, "nome": "album20"}]',
+             u'status': 200,
+             u'title': u'All albums related to 1',
+             u'url': u'/albuns/banda/<int:id>'}
+
+  comando: SHOW ALL ALBUNS_U a
+
+  resposta: User id provided was not an Integer
+
+  comando: SHOW ALL ALBUNS_U 1
+
+  resposta: {u'detail': u'[{"id_rate": 5, "id_album": 1}]',
+             u'status': 200,
+             u'title': u'All albums related to 1',
+             u'url': u'/albuns/user/<int:id>'}
+
+  comando: SHOW ALL ALBUNS a
+
+  resposta: REMOVE/SHOW ALL parameters where not valid
+
+  comando: SHOW ALL ALBUNS MB
+
+  resposta: {u'detail': u'[{"id_album": 1}]',
+             u'status': 200,
+             u'title': u'All albums related to 5',
+             u'url': u'/albuns/rate/<int:id>'}
+
+  comando: SHOW a
+
+  resposta: REMOVE/SHOW ALL parameters where not valid
+
+  comando: SHOW ALL a
+
+  resposta: REMOVE/SHOW parameters where not valid
+
+
+-----------------------
+3. REMOVE
+  comando: REMOVE USER a
+
+  resposta: User id provided was not an Integer
+
+  comando: REMOVE USER 7
+
+  resposta: {u'detail': u'No User with the given id was not found in our database',
+             u'status': 204,
+             u'title': u'User not found',
+             u'url': u'/utilizadores/<int:id>'}
+
+  comando: REMOVE USER 1
+
+  resposta: {u'detail': u'The user with id 2 was deleted',
+             u'status': 200,
+             u'title': u'User deleted',
+             u'url': u'/utilizadores/<int:id>'}
+
+  comando: REMOVE BANDA a
+
+  resposta: Band id provided was not an Integer
+
+  comando: REMOVE BANDA 7
+
+  resposta: {u'detail': u'No Band with the given id was not found in our database',
+             u'status': 204,
+             u'title': u'Band not found',
+             u'url': u'/bandas/<int:id>'}
+
+  comando: REMOVE BANDA 1
+
+  resposta: {u'detail': u'Band 1 was deleted',
+             u'status': 200,
+             u'title': u'Band deleted',
+             u'url': u'/bandas/<int:id>'}
+
+  comando: REMOVE ALBUM a
+
+  response: Album id provided was not an Integer
+
+  comando: REMOVE ALBUM 7
+
+  response: {u'detail': u'No Album with the given id was not found in our database',
+             u'status': 204,
+             u'title': u'Album not found',
+             u'url': u'/albuns/<int:id>'}
+
+  comando: REMOVE ALBUM 1
+
+  response: {u'detail': u'Album 1 was deleted',
+             u'status': 200,
+             u'title': u'Album deleted',
+             u'url': u'/albuns/<int:id>'}
+
+  comando: REMOVE ALL USERS
+
+  resposta: {u'detail': u'All users where deleted from the database',
+             u'status': 200,
+             u'title': u'All useres deleted',
+             u'url': u'/utilizadores'}
+
+  comando: REMOVE ALL BANDAS
+
+  resposta: {u'detail': u'All users where deleted from the database',
+             u'status': 200,
+             u'title': u'All bands deleted',
+             u'url': u'/bandas'}
+
+  comando: REMOVE ALL ALBUNS
+
+  resposta: {u'detail': u'All album where deleted',
+             u'status': 200,
+             u'title': u'All album deleted',
+             u'url': u'/albuns'}
+
+  comando: REMOVE ALL ALBUNS_B a
+
+  resposta: Band id provided was not an Integer
+
+  comando: REMOVE ALL ALBUNS_B 7
+
+  resposta: {u'detail': u'No Album with the given id was not found in our database',
+             u'status': 204,
+             u'title': u'Album not found',
+             u'url': u'/albuns/banda/<int:id>'}
+
+  comando: REMOVE ALL ALBUNS_B 1
+
+  resposta: {u'detail': u'All albums related to 1 deleted',
+             u'status': 200,
+             u'title': u'Albums deleted',
+             u'url': u'/albuns/banda/<int:id>'}
+
+  comando: REMOVE ALL ALBUNS_U a
+
+  resposta: User id provided was not an Integer
+
+  comando: REMOVE ALL ALBUNS_U 7
+
+  resposta: {u'detail': u'No Album with the given id was not found in our database',
+             u'status': 204,
+             u'title': u'Album not found',
+             u'url': u'/albuns/user/<int:id>'}
+
+  comando: REMOVE ALL ALBUNS_U 1
+
+  resposta: {u'detail': u'All albums related to 1 deleted',
+             u'status': 200,
+             u'title': u'Albums deleted',
+             u'url': u'/albuns/user/<int:id>'}
+
+  comando: REMOVE ALL ALBUNS a
+
+  resposta: REMOVE/SHOW ALL parameters where not valid
+
+  comando: REMOVE ALL ALBUNS MB
+
+  resposta: {u'detail': u'All albums related to 5 deleted',
+             u'status': 200,
+             u'title': u'Albums deleted',
+             u'url': u'/albuns/rate/<int:id>'}
+
+-----------------------
+4. UPDATE
+  comando: UPDATE ALBUM 1 7 MB
+
+  resposta: {u'detail': u'No Album with the given id was not found in our database',
+             u'status': 204,
+             u'title': u'Album not found',
+             u'url': u'/albuns'}
+
+  comando: UPDATE ALBUM a 1 MB
+
+  resposta: User ID was not an Integer
+
+  comando: UPDATE ALBUM 1 1 MB
+
+  resposta: {u'detail': u'The rating of the album with id 1 was updated by the user with id 1',
+             u'status': 202,
+             u'title': u'Album updated',
+             u'url': u'/albuns'}
+
+  comando: UPDATE USER a a
+
+  resposta: User ID was not an Integer
+
+  comando: UPDATE USER 7 a
+
+  resposta: {u'detail': u'No User with the given id was not found in our database',
+             u'status': 204,
+             u'title': u'User not found',
+             u'url': u'/utilizadores'}
+
+  comando: UPDATE USER 1 a
+
+  resposta: {u'detail': u'The user with id None was updated',
+             u'status': 202,
+             u'title': u'User updated',
+             u'url': u'/utilizadores'}

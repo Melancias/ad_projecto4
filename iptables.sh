@@ -21,9 +21,8 @@ sudo /sbin/iptables -A INPUT -p tcp --dport 5000 -m state --state NEW,ESTABLISHE
 # aceita ligações SSH da sua rede local
 sudo /sbin/iptables -A INPUT -s 10.101.148.182/23 -p tcp --dport 22 -m state --state NEW,ESTABLISHED -j ACCEPT
 sudo /sbin/iptables -A INPUT -s 10.101.0.0/24 -p tcp --dport 22 -m state --state NEW,ESTABLISHED -j ACCEPT
-sudo /sbin/iptables -A INPUT -s 127.0.0.0/8 -p tcp --dport 22 -m state --state NEW,ESTABLISHED -j ACCEPT
-sudo /sbin/iptables -A INPUT -p tcp --dport 22 -m state --state ESTABLISHED -j ACCEPT
-sudo /sbin/iptables -A OUTPUT -p tcp --sport 22 -m state --state NEW,ESTABLISHED -j ACCEPT
+sudo /sbin/iptables -A INPUT -p tcp --dport 22 -m state --state NEW,ESTABLISHED -j ACCEPT
+sudo /sbin/iptables -A OUTPUT -p tcp --sport 22 -m state --state ESTABLISHED -j ACCEPT
 
 
 # máquinas obrigatórias

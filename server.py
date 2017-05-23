@@ -456,4 +456,3 @@ if __name__ == '__main__':
     context = ('certs/server1.crt', 'certs/server.key')
     conndb, db = database.connect_db('db/work.db')
     app.run(debug = True, threaded=True, ssl_context=context)
-

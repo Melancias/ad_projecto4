@@ -4,7 +4,7 @@ Aplicações distribuídas - Projeto 3 - client.py
 Grupo: 20
 Alunos: 43551 45802 43304
 """
-import json, requests, pprint, sys, signal,requests_oauthlib,subprocess,webbrowser,sys,hashlib
+import json, requests, pprint, signal, subprocess, webbrowser, sys, hashlib
 
 
 
@@ -245,5 +245,4 @@ while True:
         print e.args
         print "ERROR"
         sys.exit()
-
 
