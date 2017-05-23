@@ -13,8 +13,8 @@ genero = ["pop", "rock", "indy", "trance", "metal"]
 rates = {"M": 1, "MM": 2, "S": 3, "B": 4, "MB": 5}
 
 s = requests.session()
-s.cert = ('certs/cliente.crt', 'certs/cliente.key')
-s.verify = 'certs/root.pem'
+s.cert = ('./certs/cliente.crt', './certs/cliente.key')
+s.verify = './certs/root.pem'
 session_token=None
 
 ## TODO: Se houver tempo, fazer o command HELP

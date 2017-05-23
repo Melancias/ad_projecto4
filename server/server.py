@@ -6,9 +6,8 @@ Alunos: 43551 45802 43304
 """
 import hashlib
 import json
-import pickle
+
 from flask import redirect
-from flask import url_for
 from requests_oauthlib import OAuth2Session
 
 # Personalised libraries
@@ -453,6 +452,6 @@ def checkToken(token):
     return False
 
 if __name__ == '__main__':
-    context = ('certs/server1.crt', 'certs/server.key')
-    conndb, db = database.connect_db('db/work.db')
+    context = ('./certs/server1.crt', './certs/server.key')
+    conndb, db = database.connect_db('./db/work.db')
     app.run(debug = True, threaded=True, ssl_context=context)
