@@ -18,10 +18,12 @@ Ficheiros:
     db/inserts.sql
     db/setup.sql
     db/work.db
-    libs/database.py
-    libs/queries.py
-    client.py
-    server.py
+    client/__init__.p
+    client/client.py
+    server/libs/database.py
+    server/libs/queries.py
+    server/__init__.py
+    server/server.py
 """
 
 INDEX:
