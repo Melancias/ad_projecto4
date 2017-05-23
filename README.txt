@@ -26,7 +26,11 @@ INDEX:
     1. setup.sql
     2. inserts.sql
     3. work.db
-2. Execution examples:
+    4. certeficados
+2. iptables:
+  1. Regras
+  2. Testes
+3. Execution examples:
   1. ADD
   2. SHOW
   3. REMOVE
@@ -68,6 +72,19 @@ INDEX:
         The server is capable of handling a 404 error.
         The server as a class MyException(Exception). This Exception is raises in specific occasions so it's easier to treat.
         The queries used by the server are stored in the library `queries`.
+
+        UNKNOW:
+
+        When running the server for the first time, it gives the following warning:
+        ```py
+        127.0.0.1 - - [23/May/2017 18:22:33] "GET /login HTTP/1.1" 302 -
+        /Library/Python/2.7/site-packages/requests/packages/urllib3/util/ssl_.py:334: SNIMissingWarning: An HTTPS request has been made, but the SNI (Subject Name Indication) extension to TLS is not available on this platform. This may cause the server to present an incorrect TLS certificate, which can cause validation failures. You can upgrade to a newer version of Python to solve this. For more information, see https://urllib3.readthedocs.io/en/latest/advanced-usage.html#ssl-warnings
+          SNIMissingWarning
+        /Library/Python/2.7/site-packages/requests/packages/urllib3/util/ssl_.py:132: InsecurePlatformWarning: A true SSLContext object is not available. This prevents urllib3 from configuring SSL appropriately and may cause certain SSL connections to fail. You can upgrade to a newer version of Python to solve this. For more information, see https://urllib3.readthedocs.io/en/latest/advanced-usage.html#ssl-warnings
+          InsecurePlatformWarning
+        ```
+
+        This does not affect the normal execution of the application
 
     client.py:
 
@@ -119,6 +136,20 @@ INDEX:
         The program cam be safely shut down, by pressing either ctrl+C or ctrl+Z
         In the eventuality of an unexpected error occurring, if will print 'ERROR' and exit the program
 
+        UNKNOW:
+
+        With every request, the client gives the following warning:
+        ```py
+        /Library/Python/2.7/site-packages/requests/packages/urllib3/util/ssl_.py:334: SNIMissingWarning: An HTTPS request has been made, but the SNI (Subject Name Indication) extension to TLS is not available on this platform. This may cause the server to present an incorrect TLS certificate, which can cause validation failures. You can upgrade to a newer version of Python to solve this. For more information, see https://urllib3.readthedocs.io/en/latest/advanced-usage.html#ssl-warnings
+          SNIMissingWarning
+        /Library/Python/2.7/site-packages/requests/packages/urllib3/util/ssl_.py:132: InsecurePlatformWarning: A true SSLContext object is not available. This prevents urllib3 from configuring SSL appropriately and may cause certain SSL connections to fail. You can upgrade to a newer version of Python to solve this. For more information, see https://urllib3.readthedocs.io/en/latest/advanced-usage.html#ssl-warnings
+          InsecurePlatformWarning
+        /Library/Python/2.7/site-packages/requests/packages/urllib3/connection.py:340: SubjectAltNameWarning: Certificate for localhost has no `subjectAltName`, falling back to check for a `commonName` for now. This feature is being removed by major browsers and deprecated by RFC 2818. (See https://github.com/shazow/urllib3/issues/497 for details.)
+          SubjectAltNameWarning
+        ```
+
+        This does not affect the normal execution of the application
+
 2. Personalised libraries
 
     database.py
@@ -152,8 +183,117 @@ INDEX:
 
         The db for the server
 
+    certeficados
+
+        Contidos na pasta certs/, são os certificados usados no projeto
+
 #-----------------------
-2 - EXECUTION EXAMPLES
+2 - IPTABLES
+#-----------------------
+
+1. Regras
+
+    1 - Regras base para começar:
+    ```bash
+    sudo /sbin/iptables -F
+    sudo /sbin/iptables -A INPUT -m state --state ESTABLISHED,RELATED -j ACCEPT
+    sudo /sbin/iptables -A OUTPUT -m state --state ESTABLISHED,RELATED -j ACCEPT
+    ```
+
+    2 - Suporte do serviço DNS (protocolos tcp e udp no porto 53)
+    ```bash
+    sudo /sbin/iptables -A OUTPUT -p udp --dport 53 -m state --state NEW,ESTABLISHED -j ACCEPT
+    sudo /sbin/iptables -A INPUT  -p udp --sport 53 -m state --state ESTABLISHED     -j ACCEPT
+    sudo /sbin/iptables -A OUTPUT -p tcp --dport 53 -m state --state NEW,ESTABLISHED -j ACCEPT
+    sudo /sbin/iptables -A INPUT  -p tcp --sport 53 -m state --state ESTABLISHED     -j ACCEPT
+    ```
+
+    3 - Só responde a pings com origem na máquina nemo.alunos.di.fc.ul.pt:
+    ```bash
+    sudo /sbin/iptables -A INPUT -s nemo.alunos.di.fc.ul.pt -p icmp -j -m state --state NEW,ESTABLISHED ACCEPT
+    ```
+
+    4 - Aceita ligações de qualquer máquina no porto 5000 (porto onde o projeto corre)
+    ```bash
+    sudo /sbin/iptables -A INPUT -p tcp --dport 5000 -m state --state NEW,ESTABLISHED -j ACCEPT
+    ```
+
+    5 - Aceita ligações SSH da sua rede local
+      10.101.148.182/23 - sub-rede local da faculdade
+      10.101.0.0/24     - sub-rede da gcc
+    ```bash
+    sudo /sbin/iptables -A INPUT -s 10.101.148.182/23 -p tcp --dport 22 -m state --state NEW,ESTABLISHED -j ACCEPT
+    sudo /sbin/iptables -A INPUT -s 10.101.0.0/24 -p tcp --dport 22 -m state --state NEW,ESTABLISHED -j ACCEPT
+    sudo /sbin/iptables -A INPUT -p tcp --dport 22 -m state --state NEW,ESTABLISHED -j ACCEPT
+    sudo /sbin/iptables -A OUTPUT -p tcp --sport 22 -m state --state ESTABLISHED -j ACCEPT
+    ```
+
+    6 - Dar permição às máquinas obrigatórias:
+    ```bash
+    sudo /sbin/iptables -A INPUT -d "10.101.85.6, 10.101.85.138, 10.101.85.18,10.121.53.14, 10.121.53.15, 10.101.53.16, 10.121.72.23, 10.101.148.1, 10.101.85.134" -j ACCEPT
+    sudo /sbin/iptables -A OUTPUT -s "10.101.85.6, 10.101.85.138, 10.101.85.18,10.121.53.14, 10.121.53.15, 10.101.53.16, 10.121.72.23, 10.101.148.1, 10.101.85.134" -j ACCEPT
+    ```
+
+    7 - Serviço ssl:
+    ```bash
+    sudo /sbin/iptables -A INPUT  -p tcp -m multiport --dports 21,80,443 -m state --state NEW,ESTABLISHED -j ACCEPT
+    sudo /sbin/iptables -A OUTPUT  -p tcp -m multiport --dports 21,80,443 -m state --state NEW,ESTABLISHED -j ACCEPT
+    ```
+
+    8 - Reras para acabar:
+    ```bash
+    sudo /sbin/iptables -A INPUT -i lo -j ACCEPT
+    sudo /sbin/iptables -A OUTPUT -o lo -j ACCEPT
+    sudo /sbin/iptables -A INPUT -j DROP
+    sudo /sbin/iptables -A OUTPUT -j DROP
+    ```
+
+2. Testes:
+
+    1 - o pingo proveniente de outra máquina não funciona
+    ```bash
+    fc43551@linux:~/Desktop/ad_projecto4$ ping -c4 10.101.148.5
+    PING 10.101.148.5 (10.101.148.5) 56(84) bytes of data.
+
+    --- 10.101.148.5 ping statistics ---
+    3 packets transmitted, 0 received, 100% packet loss, time 2015ms
+    ```
+
+    Não é possivel verificar que a máquina nemo.alunos.di.fc.ul.pt.
+    Contudo, conseguimos provar a cima que outra máquina da sub-rede não consegue.
+
+    2 - Para testar que a máquina aceita ligações de qualquer outra no porto 5000, criou-se um servidor simples com a porta 5000 aberta:
+      .1 - máquina com iptables
+    ```bash
+    fc45802@linux:~/Desktop/ad_projecto4$ python -m SimpleHTTPServer 5000
+    Serving HTTP on 0.0.0.0 port 5000 ...
+    10.101.148.8 - - [23/May/2017 19:03:14] "GET / HTTP/1.1" 200 -
+    ^C----------------------------------------
+    ```
+      .2 - outra máquina:
+    ```bash
+    fc43551@linux:~/Desktop/ad_projecto4$ nc 10.101.148.5 5000
+    GET /ad_projecto4.zip HTTP/1.1
+
+    HTTP/1.0 404 File not found
+    Server: SimpleHTTP/0.6 Python/2.7.12
+    Date: Tue, 23 May 2017 18:04:41 GMT
+    Connection: close
+    Content-Type: text/html
+
+    <head>
+    <title>Error response</title>
+    </head>
+    <body>
+    <h1>Error response</h1>
+    <p>Error code 404.
+    <p>Message: File not found.
+    <p>Error code explanation: 404 = Nothing matches the given URI.
+    </body>
+    ```
+
+#-----------------------
+3 - EXECUTION EXAMPLES
 #-----------------------
 
 -----------------------
